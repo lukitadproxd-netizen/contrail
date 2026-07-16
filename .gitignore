@@ -35,6 +35,9 @@ coverage/
 .env.local
 .env.*.local
 
+# Contrail local store
+.contrail/
+
 # Package manager
 package-lock.json
 yarn.lock

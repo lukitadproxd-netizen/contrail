@@ -2,6 +2,7 @@
   "name": "@contrailspec/engram",
   "version": "0.0.0",
   "description": "Contrail ↔ Engram bidirectional adapter (stretch)",
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -12,9 +13,9 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "vitest run --if-present",
-    "test:watch": "vitest --if-present",
-    "lint": "eslint src --ext .ts --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

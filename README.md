@@ -55,7 +55,8 @@ contrail add preference.editor "vscode" --confidence 0.9
 
 # 4. See the trajectory
 contrail log preference.editor
-# 01J9Z8QK3N4R5S6T7V8W9X0Y1Z | 2026-07-16T10:30:00Z | confidence: 0.90 | vscode
+# self/preference.editor:
+#   → 01J9Z8QK3N4R5S6T7V8W9X0Y1Z | 0.90 | "vscode"
 
 # 5. Update your preference (creates a supersession)
 contrail add preference.editor "neovim" --confidence 0.95 --supersedes 01J9Z8QK3N4R5S6T7V8W9X0Y1Z
@@ -63,16 +64,70 @@ contrail add preference.editor "neovim" --confidence 0.95 --supersedes 01J9Z8QK3
 
 # 6. View the full history
 contrail log preference.editor
-# 01J9A2B3C4D5E6F7G8H9I0J1K2 | 2026-07-16T11:00:00Z | confidence: 0.95 | neovim
-#   ↳ supersedes 01J9Z8QK3N4R5S6T7V8W9X0Y1Z (confidence: 0.90, vscode)
+# self/preference.editor:
+#   → 01J9A2B3C4D5E6F7G8H9I0J1K2 | 0.95 | "neovim"
+#   → 01J9Z8QK3N4R5S6T7V8W9X0Y1Z | 0.90 | "vscode"
 
-# 7. Connect to Claude Code via MCP
+# 7. View belief change delta
+contrail diff preference.editor
+
+# 8. Connect to Claude Code via MCP
 claude mcp add contrail -- npx @contrailspec/mcp
 # In Claude Code: "What's my editor preference?"
 # → "You switched from vscode (0.9) to neovim (0.95) on July 16."
 ```
 
-## The Claim Object
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `contrail init` | Initialize a new Contrail store in the current directory |
+| `contrail add <predicate> <value>` | Add a new claim (creates or supersedes) |
+| `contrail log [predicate]` | Show trajectory for a predicate (newest first) |
+| `contrail validate` | Validate all claims in the store |
+| `contrail diff <predicate>` | Show belief change delta for a predicate |
+
+### Add Command Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-c, --confidence <number>` | Confidence 0.0-1.0 | 0.9 |
+| `-s, --supersedes <id>` | ULID of claim to supersede | — |
+| `--subject <string>` | Subject | "self" |
+| `--value-type <type>` | Value type: string\|number\|boolean\|enum\|list | string |
+| `--source-tool <string>` | Source tool name | contrail-cli |
+| `--source-session <string>` | Source session ID | — |
+| `--source-kind <kind>` | Source kind: explicit-statement\|inferred\|imported\|corrected | explicit-statement |
+| `--visibility <type>` | Visibility: private\|shared | private |
+
+## MCP Adapter
+
+The `@contrailspec/mcp` package provides an MCP server with:
+
+### Resource
+
+- `contrail://claims` — Returns all claims as JSON
+
+### Tools
+
+| Tool | Description |
+|------|-------------|
+| `contrail_remember` | Store a new claim about the user |
+| `contrail_recall` | Retrieve current belief for a subject/predicate |
+| `contrail_trajectory` | Show the full belief history for a subject/predicate |
+
+### MCP Server Usage
+
+```typescript
+import { ContrailMCPServer } from '@contrailspec/mcp';
+
+const server = new ContrailMCPServer({
+  storePath: '/path/to/.contrail/claims.jsonl' // optional, defaults to cwd
+});
+
+// Get the MCP server instance for stdio transport
+const mcpServer = server.getServer();
+```
 
 ```json
 {

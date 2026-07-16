@@ -22,7 +22,8 @@
     "confidence"
   ],
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "packages/adapters/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",

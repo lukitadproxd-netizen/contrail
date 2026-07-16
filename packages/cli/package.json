@@ -2,6 +2,7 @@
   "name": "@contrailspec/cli",
   "version": "0.0.0",
   "description": "Contrail CLI — init, add, log, validate, diff",
+  "type": "module",
   "bin": {
     "contrail": "./dist/cli.js"
   },
@@ -15,9 +16,9 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "vitest run --if-present",
-    "test:watch": "vitest --if-present",
-    "lint": "eslint src --ext .ts --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "dev": "tsx src/cli.ts"
   },

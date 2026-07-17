@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { createStore, generateULID, type Store } from './index.js';
-import { parseClaim, resolveTrajectory } from '@contrailspec/core';
-import type { Claim } from '@contrailspec/core';
+import { parseClaim, resolveTrajectory } from '@lukitadproxd-netizen/core';
+import type { Claim } from '@lukitadproxd-netizen/core';
 
 const program = new Command();
 

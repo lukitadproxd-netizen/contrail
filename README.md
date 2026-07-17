@@ -25,7 +25,7 @@ Not storage (Mem0/Zep). Not transport (MCP). Not signing (Engram). The missing l
 | **Storage** | Append-only JSONL (one claim per line, sorted keys) — git-native, diffable |
 | **Schema** | JSON Schema (`claim.schema.json`) — normative, SemVer'd, CI-validated |
 | **Transport** | Rides **MCP** — the flagship adapter exposes claims as an MCP resource + 3 tools |
-| **Interop** | Bidirectional adapter to **Engram** envelopes (stretch v0.1) |
+| **Interop** | Bidirectional adapter to **Engram** envelopes (implemented v0.1) |
 | **License** | Apache-2.0 — explicit patent grant, enterprise-safe |
 
 ## What Contrail Is Not
@@ -244,7 +244,7 @@ Closed because filtering by provenance requires a known, finite set.
        ▼               ▼
 ┌──────────────┐ ┌──────────────┐
 │ JSONL Store  │ │ @lukitadproxd-netizen/engram │
-│ (git-native) │ │ (stretch)    │
+│ (git-native) │ │ (implemented)    │
 └──────────────┘ └──────────────┘
 ```
 

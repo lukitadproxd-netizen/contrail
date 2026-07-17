@@ -1,12 +1,31 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { readFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
+﻿import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { readFileSync, appendFileSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
+import { lock, unlock } from 'proper-lockfile';
 import { z } from 'zod';
-import { parseClaim, resolveTrajectory, getCurrentClaim } from '@contrailspec/core';
-import type { Claim } from '@contrailspec/core';
+import { parseClaim, resolveTrajectory, getCurrentClaim } from '../../../core/dist/index.js';
+import type { Claim } from '../../../core/dist/index.js';
 
 const STORE_DIR = '.contrail';
 const STORE_FILE = 'claims.jsonl';
+const LOCK_FILE = 'claims.jsonl.lock';
+
+type RememberArgs = {
+  subject: string;
+  predicate: string;
+  value: unknown;
+  confidence: number;
+  source_tool: string;
+  source_kind: 'explicit-statement' | 'inferred' | 'imported' | 'corrected';
+  supersedes?: string;
+};
+
+type RecallArgs = {
+  subject: string;
+  predicate: string;
+};
+
+type TrajectoryArgs = RecallArgs;
 
 export interface ContrailMCPServerOptions {
   storePath?: string;
@@ -27,9 +46,37 @@ function readClaims(storePath: string): Claim[] {
   return content.trim().split('\n').map(line => JSON.parse(line)) as Claim[];
 }
 
-function appendClaim(storePath: string, claim: Claim): void {
+function getLockPath(storePath: string): string {
+  const dir = resolve(storePath, '..');
+  return resolve(dir, LOCK_FILE);
+}
+
+async function ensureLockDir(lockPath: string): Promise<void> {
+  const dir = resolve(lockPath, '..');
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+  if (!existsSync(lockPath)) {
+    writeFileSync(lockPath, '', 'utf-8');
+  }
+}
+
+async function appendClaim(storePath: string, claim: Claim): Promise<void> {
   const line = JSON.stringify(claim);
-  appendFileSync(storePath, line + '\n', 'utf-8');
+  const lockPath = getLockPath(storePath);
+  
+  await ensureLockDir(lockPath);
+  
+  const release = await lock(lockPath, { retries: 5 });
+  try {
+    const dir = resolve(storePath, '..');
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true });
+    }
+    appendFileSync(storePath, line + '\n', 'utf-8');
+  } finally {
+    await release();
+  }
 }
 
 function generateULID(): string {
@@ -53,6 +100,10 @@ function generateULID(): string {
 export class ContrailMCPServer {
   private server: McpServer;
   private storePath: string;
+  private toolHandlers: Map<string, (args: Record<string, unknown>) => Promise<{
+  content: Array<{ type: 'text'; text: string }>;
+  isError?: boolean;
+}>> = new Map();
 
   constructor(options: ContrailMCPServerOptions = {}) {
     this.storePath = options.storePath || getStorePath(process.cwd());
@@ -62,6 +113,25 @@ export class ContrailMCPServer {
     });
     this.setupResources();
     this.setupTools();
+  }
+
+  getServer(): McpServer {
+    return this.server;
+  }
+
+  getToolHandler(name: string): { handler: (args: Record<string, unknown>) => Promise<{
+  content: Array<{ type: 'text'; text: string }>;
+  isError?: boolean;
+}> } | undefined {
+    const handler = this.toolHandlers.get(name);
+    return handler ? { handler: handler } : undefined;
+  }
+
+  private registerTool(name: string, handler: (args: Record<string, unknown>) => Promise<{
+  content: Array<{ type: 'text'; text: string }>;
+  isError?: boolean;
+}>): void {
+    this.toolHandlers.set(name, handler);
   }
 
   private setupResources(): void {
@@ -82,6 +152,110 @@ export class ContrailMCPServer {
   }
 
   private setupTools(): void {
+    const rememberHandler = async (args: Record<string, unknown>) => {
+      const a = args as RememberArgs;
+      const id = generateULID();
+      const claim: Claim = {
+        schema_version: '0.1.0',
+        id,
+        subject: a.subject,
+        predicate: a.predicate,
+        value: a.value,
+        value_type: typeof a.value === 'number' ? 'number' : 
+                   typeof a.value === 'boolean' ? 'boolean' :
+                   Array.isArray(a.value) ? 'list' : 'string',
+        confidence: a.confidence,
+        valid_from: new Date().toISOString(),
+        valid_until: null,
+        supersedes: a.supersedes || null,
+        source: {
+          tool: a.source_tool,
+          session_id: null,
+          kind: a.source_kind
+        },
+        visibility: 'private',
+        signature: null
+      };
+
+      const { claim: parsed, error } = await parseClaim(JSON.stringify(claim));
+      if (error) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `Error: ${error}`
+          }],
+          isError: true
+        };
+      }
+
+      await appendClaim(this.storePath, parsed!);
+      return {
+        content: [{
+          type: 'text' as const,
+          text: `Stored claim ${parsed!.id} for ${parsed!.subject}/${parsed!.predicate}`
+        }]
+      };
+    };
+
+    const recallHandler = async (args: Record<string, unknown>) => {
+      const a = args as RecallArgs;
+      const claims = readClaims(this.storePath);
+      const current = getCurrentClaim(claims, a.subject, a.predicate);
+      
+      if (!current) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `No claim found for ${a.subject}/${a.predicate}`
+          }]
+        };
+      }
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify(current, null, 2)
+        }]
+      };
+    };
+
+    const trajectoryHandler = async (args: Record<string, unknown>) => {
+      const a = args as TrajectoryArgs;
+      const claims = readClaims(this.storePath);
+      const trajectory = resolveTrajectory(claims, a.subject, a.predicate);
+      
+      if (trajectory.claims.length === 0) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `No claims found for ${a.subject}/${a.predicate}`
+          }]
+        };
+      }
+
+      const history = trajectory.claims.map((claim, i) => ({
+        position: i + 1,
+        id: claim.id,
+        value: claim.value,
+        confidence: claim.confidence,
+        source: claim.source,
+        valid_from: claim.valid_from,
+        isHead: claim.id === trajectory.head?.id
+      }));
+
+      return {
+        content: [{
+          type: 'text' as const,
+          text: JSON.stringify({
+            subject: a.subject,
+            predicate: a.predicate,
+            totalClaims: history.length,
+            history
+          }, null, 2)
+        }]
+      };
+    };
+
     this.server.tool(
       'contrail_remember',
       'Store a new claim about the user',
@@ -94,50 +268,9 @@ export class ContrailMCPServer {
         source_kind: z.enum(['explicit-statement', 'inferred', 'imported', 'corrected']).describe('How the claim was produced'),
         supersedes: z.string().optional().describe('ULID of claim to supersede')
       },
-      async (args) => {
-        const id = generateULID();
-        const claim: Claim = {
-          schema_version: '0.1.0',
-          id,
-          subject: args.subject,
-          predicate: args.predicate,
-          value: args.value,
-          value_type: typeof args.value === 'number' ? 'number' : 
-                     typeof args.value === 'boolean' ? 'boolean' :
-                     Array.isArray(args.value) ? 'list' : 'string',
-          confidence: args.confidence,
-          valid_from: new Date().toISOString(),
-          valid_until: null,
-          supersedes: args.supersedes || null,
-          source: {
-            tool: args.source_tool,
-            session_id: null,
-            kind: args.source_kind
-          },
-          visibility: 'private',
-          signature: null
-        };
-
-        const { claim: parsed, error } = await parseClaim(JSON.stringify(claim));
-        if (error) {
-          return {
-            content: [{
-              type: 'text' as const,
-              text: `Error: ${error}`
-            }],
-            isError: true
-          };
-        }
-
-        appendClaim(this.storePath, parsed!);
-        return {
-          content: [{
-            type: 'text' as const,
-            text: `Stored claim ${parsed!.id} for ${parsed!.subject}/${parsed!.predicate}`
-          }]
-        };
-      }
+      rememberHandler
     );
+    this.registerTool('contrail_remember', rememberHandler);
 
     this.server.tool(
       'contrail_recall',
@@ -146,27 +279,9 @@ export class ContrailMCPServer {
         subject: z.string().describe('Who/what to recall about (default: "self")'),
         predicate: z.string().describe('Namespaced key to recall')
       },
-      async (args) => {
-        const claims = readClaims(this.storePath);
-        const current = getCurrentClaim(claims, args.subject, args.predicate);
-        
-        if (!current) {
-          return {
-            content: [{
-              type: 'text' as const,
-              text: `No claim found for ${args.subject}/${args.predicate}`
-            }]
-          };
-        }
-
-        return {
-          content: [{
-            type: 'text' as const,
-            text: JSON.stringify(current, null, 2)
-          }]
-        };
-      }
+      recallHandler
     );
+    this.registerTool('contrail_recall', recallHandler);
 
     this.server.tool(
       'contrail_trajectory',
@@ -175,45 +290,8 @@ export class ContrailMCPServer {
         subject: z.string().describe('Who/what trajectory to show (default: "self")'),
         predicate: z.string().describe('Namespaced key trajectory')
       },
-      async (args) => {
-        const claims = readClaims(this.storePath);
-        const trajectory = resolveTrajectory(claims, args.subject, args.predicate);
-        
-        if (trajectory.claims.length === 0) {
-          return {
-            content: [{
-              type: 'text' as const,
-              text: `No claims found for ${args.subject}/${args.predicate}`
-            }]
-          };
-        }
-
-        const history = trajectory.claims.map((claim, i) => ({
-          position: i + 1,
-          id: claim.id,
-          value: claim.value,
-          confidence: claim.confidence,
-          source: claim.source,
-          valid_from: claim.valid_from,
-          isHead: claim.id === trajectory.head?.id
-        }));
-
-        return {
-          content: [{
-            type: 'text' as const,
-            text: JSON.stringify({
-              subject: args.subject,
-              predicate: args.predicate,
-              totalClaims: history.length,
-              history
-            }, null, 2)
-          }]
-        };
-      }
+      trajectoryHandler
     );
-  }
-
-  getServer(): McpServer {
-    return this.server;
+    this.registerTool('contrail_trajectory', trajectoryHandler);
   }
 }

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { convertToEngram, convertFromEngram } from '../src/index.js';
+import type { Claim } from '@lukitadproxd-netizen/core';
+import { convertToEngram, convertFromEngram } from '../dist/index.js';
 
 describe('Engram Adapter (v0.1)', () => {
   it('convertToEngram converts identity claim', () => {
@@ -135,6 +136,19 @@ describe('Engram Adapter (v0.1)', () => {
     expect(claims).toHaveLength(1);
     expect(claims[0].predicate).toBe('constraint.language.required');
     expect(claims[0].confidence).toBe(1.0);
+  });
+
+  it('convertFromEngram merges EVOLUTION with other sections instead of discarding them', () => {
+    const envelope = {
+      IDENTITY: { name: 'Lucas' },
+      BELIEFS: { likes_coffee: true },
+      EVOLUTION: [
+        { id: 'X1', predicate: 'foo.bar', value: 1 } as unknown as Claim
+      ]
+    };
+    const result = convertFromEngram(envelope);
+    const predicates = result.map(c => c.predicate).sort();
+    expect(predicates).toEqual(['belief.likes_coffee', 'foo.bar', 'identity.name'].sort());
   });
 
   it('convertFromEngram returns EVOLUTION array if present', () => {

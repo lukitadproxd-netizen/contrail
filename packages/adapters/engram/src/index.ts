@@ -84,23 +84,9 @@ export function convertToEngram(
  * Tracked in: https://github.com/lukitadproxd-netizen/contrail/issues/6
  */
 export function convertFromEngram(_envelope: EngramEnvelope): Claim[] {
+  void _envelope;
   throw new Error(
     'convertFromEngram is not implemented in v0.1: requires official Engram schema confirmation. ' +
     'See ROADMAP.md and the tracking issue linked in this function\'s doc comment.'
   );
-}
-
-function generateULID(): string {
-  const alphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-  let timestamp = Date.now();
-  let timestampStr = '';
-  for (let i = 0; i < 10; i++) {
-    timestampStr = alphabet[timestamp % 32] + timestampStr;
-    timestamp = Math.floor(timestamp / 32);
-  }
-  let randomStr = '';
-  for (let i = 0; i < 16; i++) {
-    randomStr += alphabet[Math.floor(Math.random() * 32)];
-  }
-  return timestampStr + randomStr;
 }

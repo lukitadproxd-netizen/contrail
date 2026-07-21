@@ -1,42 +1,12 @@
 # Contrail Documentation
 
-## Quick Start
+Contrail gives coding agents versioned project memory. Start with the proof,
+not the schema.
 
-```bash
-# Install
-npm install -g @lukitadproxd-netizen/cli
+- [Quick Start](quick-start.md) — install Contrail, seed the demo, and connect Claude Code.
+- [Two-Minute Demo](two-minute-demo.md) — observe a changed testing policy resolved correctly.
+- [Why Contrail?](why-contrail.md) — why an overwritten instruction is not enough.
+- [Common Use Cases](common-use-cases.md) — project conventions that change over time.
+- [FAQ](faq.md) — what Contrail does and intentionally does not solve.
 
-# Initialize a store
-contrail init
-
-# Add a claim
-contrail add preference.editor "neovim" --confidence 0.95
-
-# View trajectory
-contrail log preference.editor
-```
-
-## Connect to Claude Code
-
-```bash
-# Add MCP server
-claude mcp add contrail -- npx @lukitadproxd-netizen/mcp
-
-# In Claude Code:
-# "What's my editor preference?"
-# "Show me my code style history"
-# "What are my hard constraints?"
-```
-
-## Documentation
-
-- [Spec Explorer](spec-explorer.md) — Annotated walkthrough of the claim schema
-- [FAQ](faq.md) — "Why not Engram/OMP/MCP/Mem0?"
-
-## Specification
-
-The normative spec lives in `spec/SPEC.md` with JSON Schema at `spec/schema/v0.1/claim.schema.json`.
-
-## License
-
-Apache-2.0
+For format details, see the [Specification](../spec/SPEC.md) and [Spec Explorer](spec-explorer.md).

@@ -7,7 +7,7 @@ const program = new Command();
 
 program
   .name('contrail')
-  .description('Contrail — A vapor trail for what an AI knows about you')
+  .description('Contrail — versioned project memory for coding agents')
   .version('0.0.0');
 
 function getStore(cwd: string): Store {

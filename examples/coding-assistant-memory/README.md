@@ -1,6 +1,13 @@
-# Coding Assistant Memory Example
+# Additional Coding Assistant Fixture
 
-This is a realistic seed file for a developer's personal Contrail store.
+This fixture exercises several claim shapes for manual exploration. It is not
+the product demo for the first release.
+
+Contrail's first release targets **evolving project conventions for coding
+agents**. Start with the deterministic
+[testing-policy-evolution](../testing-policy-evolution/README.md) demo to see
+the intended workflow: a current instruction, its source and timestamp, the
+policy it replaced, and the reasoning chain.
 
 ## Claims Included
 

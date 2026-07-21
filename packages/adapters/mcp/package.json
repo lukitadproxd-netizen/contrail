@@ -1,10 +1,13 @@
 {
   "name": "@lukitadproxd-netizen/mcp",
   "version": "0.0.0",
-  "description": "Contrail MCP server adapter — exposes claims as resource + tools",
+  "description": "Contrail MCP server for versioned project instructions",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "contrail-mcp": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",

@@ -1,0 +1,62 @@
+{
+  "name": "Three-Step Chain",
+  "description": "Package manager decision evolved twice: npm → pnpm → yarn. Only the head of the chain is current.",
+  "claims": [
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC02-A00000000000001",
+      "subject": "repo",
+      "predicate": "project.dependencies.package_manager",
+      "value": "npm",
+      "value_type": "string",
+      "confidence": 0.85,
+      "valid_from": "2026-01-15T10:00:00Z",
+      "valid_until": null,
+      "supersedes": null,
+      "source": { "tool": "project-maintainer", "session_id": "init-dec", "kind": "explicit-statement" },
+      "visibility": "shared",
+      "signature": null
+    },
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC02-B00000000000002",
+      "subject": "repo",
+      "predicate": "project.dependencies.package_manager",
+      "value": "pnpm",
+      "value_type": "string",
+      "confidence": 0.92,
+      "valid_from": "2026-03-01T12:00:00Z",
+      "valid_until": null,
+      "supersedes": "BENCH-SC02-A00000000000001",
+      "source": { "tool": "project-maintainer", "session_id": "perf-review-mar", "kind": "corrected" },
+      "visibility": "shared",
+      "signature": null
+    },
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC02-C00000000000003",
+      "subject": "repo",
+      "predicate": "project.dependencies.package_manager",
+      "value": "yarn",
+      "value_type": "string",
+      "confidence": 0.88,
+      "valid_from": "2026-06-01T09:00:00Z",
+      "valid_until": null,
+      "supersedes": "BENCH-SC02-B00000000000002",
+      "source": { "tool": "project-maintainer", "session_id": "team-dec-jun", "kind": "corrected" },
+      "visibility": "shared",
+      "signature": null
+    }
+  ],
+  "queries": [
+    {
+      "subject": "repo",
+      "predicate": "project.dependencies.package_manager",
+      "expected_value": "yarn",
+      "expected_chain_length": 3,
+      "expected_previous_value": "pnpm",
+      "expected_explanation_includes": "supersedes",
+      "explanation": "The package manager evolved twice: npm → pnpm (performance) → yarn (team decision). The current policy is yarn."
+    }
+  ]
+}

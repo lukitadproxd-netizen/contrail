@@ -110,7 +110,7 @@ The enum is closed because filtering by provenance requires a known, finite set.
 
 Contrail defines the *shape* of confidence. It does not *calibrate* it — a claim written with `confidence: 0.9` by a careless adapter is indistinguishable at the spec level from one written carefully. This mirrors HTTP's relationship to status codes: the protocol defines what `404` means; it doesn't guarantee servers use it correctly.
 
-Computing temporal decay (e.g., "this claim is 6 months old, treat as less certain") is intentionally **not** part of `contrail-core`. A non-normative recipe exists in `docs/spec-explorer.md`.
+Computing temporal decay (e.g., "this claim is 6 months old, treat as less certain") is intentionally **not** part of `contrail-core`. A non-normative recipe is included in the [spec walkthrough](../docs/index.md).
 
 ## 5. Supersedes and Trajectory Resolution
 

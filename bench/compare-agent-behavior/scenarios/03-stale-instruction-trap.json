@@ -1,0 +1,47 @@
+{
+  "name": "Stale Instruction Trap",
+  "description": "A stale instruction has higher confidence and appears more authoritative, but is actually superseded by a lower-confidence correction.",
+  "claims": [
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC03-A00000000000001",
+      "subject": "repo",
+      "predicate": "project.architecture.data_layer",
+      "value": "Use raw SQL with a thin query builder.",
+      "value_type": "string",
+      "confidence": 0.95,
+      "valid_from": "2026-02-01T08:00:00Z",
+      "valid_until": null,
+      "supersedes": null,
+      "source": { "tool": "tech-lead", "session_id": "initial-arch", "kind": "explicit-statement" },
+      "visibility": "shared",
+      "signature": null
+    },
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC03-B00000000000002",
+      "subject": "repo",
+      "predicate": "project.architecture.data_layer",
+      "value": "Use Drizzle ORM for type-safe queries.",
+      "value_type": "string",
+      "confidence": 0.7,
+      "valid_from": "2026-05-20T16:00:00Z",
+      "valid_until": null,
+      "supersedes": "BENCH-SC03-A00000000000001",
+      "source": { "tool": "tech-lead", "session_id": "post-poc-review", "kind": "corrected" },
+      "visibility": "shared",
+      "signature": null
+    }
+  ],
+  "queries": [
+    {
+      "subject": "repo",
+      "predicate": "project.architecture.data_layer",
+      "expected_value": "Use Drizzle ORM for type-safe queries.",
+      "expected_chain_length": 2,
+      "expected_previous_value": "Use raw SQL with a thin query builder.",
+      "expected_explanation_includes": "supersedes",
+      "explanation": "The stale instruction (raw SQL, confidence 0.95) looks more certain than the current one (Drizzle ORM, confidence 0.70). A flat-memory agent would pick the stale instruction because it has higher confidence. Contrail picks the head of the supersession chain."
+    }
+  ]
+}

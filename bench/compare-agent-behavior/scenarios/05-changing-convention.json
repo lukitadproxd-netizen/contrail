@@ -1,0 +1,62 @@
+{
+  "name": "Changing Project Convention",
+  "description": "A full project convention (API error format) evolves from ad-hoc strings to RFC 9457 problem details, with intermediate steps and confidence fluctuation.",
+  "claims": [
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC05-A00000000000001",
+      "subject": "repo",
+      "predicate": "project.api.error_format",
+      "value": "Return plain string error messages.",
+      "value_type": "string",
+      "confidence": 0.8,
+      "valid_from": "2026-01-05T09:00:00Z",
+      "valid_until": null,
+      "supersedes": null,
+      "source": { "tool": "founder", "session_id": "v1-prototype", "kind": "explicit-statement" },
+      "visibility": "shared",
+      "signature": null
+    },
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC05-B00000000000002",
+      "subject": "repo",
+      "predicate": "project.api.error_format",
+      "value": "Return JSON object with error code and message.",
+      "value_type": "string",
+      "confidence": 0.85,
+      "valid_from": "2026-02-20T11:00:00Z",
+      "valid_until": null,
+      "supersedes": "BENCH-SC05-A00000000000001",
+      "source": { "tool": "tech-lead", "session_id": "api-review-feb", "kind": "corrected" },
+      "visibility": "shared",
+      "signature": null
+    },
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC05-C00000000000003",
+      "subject": "repo",
+      "predicate": "project.api.error_format",
+      "value": "Align with RFC 9457 problem details.",
+      "value_type": "string",
+      "confidence": 0.95,
+      "valid_from": "2026-04-15T14:00:00Z",
+      "valid_until": null,
+      "supersedes": "BENCH-SC05-B00000000000002",
+      "source": { "tool": "tech-lead", "session_id": "openapi-migration", "kind": "corrected" },
+      "visibility": "shared",
+      "signature": null
+    }
+  ],
+  "queries": [
+    {
+      "subject": "repo",
+      "predicate": "project.api.error_format",
+      "expected_value": "Align with RFC 9457 problem details.",
+      "expected_chain_length": 3,
+      "expected_previous_value": "Return JSON object with error code and message.",
+      "expected_explanation_includes": "supersedes",
+      "explanation": "API error format evolved from plain strings → JSON objects → RFC 9457. Current is RFC 9457."
+    }
+  ]
+}

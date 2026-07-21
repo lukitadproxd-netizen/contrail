@@ -28,31 +28,47 @@ confidence, and complete correction chain.
 ## See the value in two minutes
 
 ```bash
-npm install
 npm run demo
 ```
 
-The demo is deterministic: it seeds these two project decisions with fixed IDs
-and timestamps.
+The demo compares two lookup strategies side by side on the same claim store:
+
+- **WITHOUT CONTRAIL** — flat memory (picks highest confidence, ignores supersession)
+- **WITH CONTRAIL** — temporal memory (follows the supersession chain)
 
 ```text
 WITHOUT CONTRAIL
-  A stale memory says: "Use Node's built-in test runner."
-  It cannot prove that a later project decision replaced it.
+  ✗ Uses stale instruction: "Use Node's built-in test runner."
+  A flat-memory agent cannot distinguish current from superseded policies.
 
 WITH CONTRAIL
-CURRENT INSTRUCTION
-  "Use Vitest."
-  Current since: 2026-06-15T14:30:00Z
-  Source: project-maintainer (corrected)
-  Recorded confidence: 0.98
-
-WHY THIS IS CURRENT
-  This claim supersedes the previous Node test-runner policy.
+  ✓ Follows current policy: "Use Vitest."
+  Explains: this supersedes the earlier Node test-runner policy.
+  Source, timestamp, and recorded confidence are all available.
 ```
 
-The real CLI output is compared with a checked-in expected result; no model call
-or generated timestamp is involved. See the [Two-Minute Demo](docs/two-minute-demo.md).
+The demo is deterministic: fixed claim IDs, fixed timestamps, no LLM calls,
+no network access, no random values. The output is self-contained.
+
+For the full reproducible comparison across five scenarios:
+
+```bash
+npm run benchmark
+```
+
+Current benchmark results (deterministic, always produces these numbers):
+
+| Scenario | Flat memory | Contrail |
+|----------|-------------|----------|
+| Simple evolution | ✓ (lucky — highest confidence) | ✓ + provenance |
+| Three-step chain | ✗ (picks middle, not head) | ✓ |
+| Stale instruction trap | ✗ (picks stale, higher confidence) | ✓ |
+| Multiple predicates | 1/2 correct | 2/2 + provenance |
+| Changing convention | ✓ (lucky — confidence climbs) | ✓ + provenance |
+| **Total** | **50% (3/6)** | **100% (6/6)** |
+
+The benchmark never calls an LLM, contacts a network, or uses random values.
+Every claim ID and timestamp is fixed. Every run produces the same output.
 
 ## Quick install
 
@@ -109,9 +125,8 @@ the CLI and MCP server both use the same claim and trajectory logic.
 ## Documentation
 
 - [Quick Start](docs/quick-start.md) — install, seed a store, and connect Claude Code.
-- [Two-Minute Demo](docs/two-minute-demo.md) — the exact proof and expected output.
-- [Why Contrail?](docs/why-contrail.md) — why changing project instructions need versioned memory.
-- [Common Use Cases](docs/common-use-cases.md) — focused coding-assistant examples.
+- [Two-Minute Demo](docs/two-minute-demo.md) — walkthrough of the agent behavior comparison.
+- [Agent Behavior Benchmark](bench/compare-agent-behavior/) — reproducible side-by-side comparison.
 - [FAQ](docs/faq.md) — scope, confidence, and current limitations.
 - [Specification](spec/SPEC.md) — the normative claim format, for implementers.
 

@@ -194,16 +194,17 @@ program
         return;
       }
       
-      console.log(`${options.subject}/${predicate} belief change:`);
-      for (let i = trajectory.claims.length - 1; i >= 0; i--) {
-        const c = trajectory.claims[i];
-        if (!c) continue;
-        const next = trajectory.claims[i + 1];
-        if (next && next.source) {
-          console.log(`\n${next.id} → ${c.id}`);
-          console.log(`  Value: ${JSON.stringify(next.value)} → ${JSON.stringify(c.value)}`);
-          console.log(`  Confidence: ${next.confidence.toFixed(2)} → ${c.confidence.toFixed(2)}`);
-          console.log(`  Source: ${next.source.kind} (${next.source.tool})`);
+      console.log(`${options.subject}/${predicate} belief change (oldest → newest):`);
+      const oldestFirst = [...trajectory.claims].reverse();
+      for (let i = 0; i < oldestFirst.length - 1; i++) {
+        const from = oldestFirst[i];
+        const to = oldestFirst[i + 1];
+        if (!from || !to) continue;
+        console.log(`\n${from.id} → ${to.id}`);
+        console.log(`  Value: ${JSON.stringify(from.value)} → ${JSON.stringify(to.value)}`);
+        console.log(`  Confidence: ${from.confidence.toFixed(2)} → ${to.confidence.toFixed(2)}`);
+        if (to.source) {
+          console.log(`  Source: ${to.source.kind} (${to.source.tool})`);
         }
       }
     } catch {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { convertToEngram, convertFromEngram } from '../dist/index.js';
+import { convertToEngram, convertFromEngram } from '../src/index.js';
 
 describe('Engram Adapter (v0.1)', () => {
   it('convertToEngram converts identity claim', () => {

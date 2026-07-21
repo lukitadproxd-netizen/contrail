@@ -3,8 +3,8 @@ import { readFileSync, appendFileSync, existsSync, mkdirSync, writeFileSync } fr
 import { resolve } from 'path';
 import { lock, unlock } from 'proper-lockfile';
 import { z } from 'zod';
-import { parseClaim, resolveCurrentBelief, resolveTrajectory } from '../../../core/dist/index.js';
-import type { Claim } from '../../../core/dist/index.js';
+import { parseClaim, resolveCurrentBelief, resolveTrajectory } from '@lukitadproxd-netizen/core';
+import type { Claim } from '@lukitadproxd-netizen/core';
 
 const STORE_DIR = '.contrail';
 const STORE_FILE = 'claims.jsonl';

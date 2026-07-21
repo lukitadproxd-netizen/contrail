@@ -2,8 +2,8 @@
 
 ## Goal
 
-Show why a coding agent needs more than a current-value memory when project
-instructions evolve.
+Show that an agent using Contrail follows the current project policy and
+explains why, while a flat-memory agent falls for stale instructions.
 
 ## Scenario
 
@@ -14,48 +14,43 @@ review, the maintainer standardized on Vitest. A coding agent is asked:
 
 ## Without Contrail
 
-Give the agent only the old saved instruction:
+A flat-memory agent stores only the latest instruction value. It cannot
+distinguish current policy from superseded policy. It picks by confidence,
+which can be higher on a stale instruction.
 
 ```text
-Use Node's built-in test runner.
+✗ Returns: "Use Node's built-in test runner."
+  No provenance.
+  No explanation of why this is current.
 ```
-
-It may follow stale context. Even if another system overwrote the value with
-`Vitest`, it cannot show when the change happened, who made it, or which policy
-was replaced.
 
 ## With Contrail
 
-Run the proof from the repository root:
+Contrail's resolveCurrentBelief follows the supersession chain to find the
+head — the current instruction. It also exposes the replaced instruction,
+source, timestamp, and recorded confidence.
+
+```text
+✓ Returns: "Use Vitest."
+  Current since: 2026-06-15T14:30:00Z
+  Source: project-maintainer (corrected)
+  This supersedes: "Use Node's built-in test runner."
+```
+
+## Run it
 
 ```bash
-npm install
 npm run demo
 ```
 
-Contrail prints this resolved outcome:
+The demo is deterministic: fixed claim IDs, fixed timestamps, no LLM calls.
+It runs the same comparison and prints both results side by side.
 
-```text
-CURRENT INSTRUCTION
-  "Use Vitest."
-  Current since: 2026-06-15T14:30:00Z
-  Source: project-maintainer (corrected)
-  Recorded confidence: 0.98
+## Run the full benchmark
 
-WHY THIS IS CURRENT
-  This claim supersedes 01J00000000000000000000000, so it is the current instruction.
-  Previous instruction: "Use Node's built-in test runner."
+```bash
+npm run benchmark
 ```
 
-The complete terminal output is checked into
-[expected-cli-output.txt](../examples/testing-policy-evolution/expected-cli-output.txt).
-The runner fails if the live CLI output differs. No LLM, network call, current
-clock, or manual data entry affects the result.
-
-## What to say after the demo
-
-> Contrail lets a coding agent follow the latest project instruction and show
-> exactly why it replaced the previous one.
-
-That is the first release. Do not introduce scale, semantic retrieval, or
-multi-user features into this demonstration.
+Five scenarios compare flat-memory vs. Contrail on correctness and
+provenance. The benchmark always produces exactly the same output.

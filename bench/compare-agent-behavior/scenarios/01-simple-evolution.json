@@ -1,0 +1,47 @@
+{
+  "name": "Simple Evolution",
+  "description": "Project testing framework changed from Node test runner to Vitest. A single correction supersedes the original decision.",
+  "claims": [
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC01-A00000000000001",
+      "subject": "repo",
+      "predicate": "project.testing.framework",
+      "value": "Use Node's built-in test runner.",
+      "value_type": "string",
+      "confidence": 0.9,
+      "valid_from": "2026-01-10T09:00:00Z",
+      "valid_until": null,
+      "supersedes": null,
+      "source": { "tool": "project-maintainer", "session_id": "arch-review-jan", "kind": "explicit-statement" },
+      "visibility": "shared",
+      "signature": null
+    },
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC01-B00000000000002",
+      "subject": "repo",
+      "predicate": "project.testing.framework",
+      "value": "Use Vitest.",
+      "value_type": "string",
+      "confidence": 0.98,
+      "valid_from": "2026-06-15T14:30:00Z",
+      "valid_until": null,
+      "supersedes": "BENCH-SC01-A00000000000001",
+      "source": { "tool": "project-maintainer", "session_id": "arch-review-jun", "kind": "corrected" },
+      "visibility": "shared",
+      "signature": null
+    }
+  ],
+  "queries": [
+    {
+      "subject": "repo",
+      "predicate": "project.testing.framework",
+      "expected_value": "Use Vitest.",
+      "expected_chain_length": 2,
+      "expected_previous_value": "Use Node's built-in test runner.",
+      "expected_explanation_includes": "supersedes",
+      "explanation": "The original Node test-runner policy was corrected five months later when the team standardized on Vitest."
+    }
+  ]
+}

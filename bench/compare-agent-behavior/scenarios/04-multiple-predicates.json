@@ -1,0 +1,101 @@
+{
+  "name": "Multiple Predicates",
+  "description": "Two independent project decisions evolve on separate timelines. The agent must resolve both correctly.",
+  "claims": [
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC04-A00000000000001",
+      "subject": "repo",
+      "predicate": "project.linting.formatter",
+      "value": "Use Prettier with default settings.",
+      "value_type": "string",
+      "confidence": 0.9,
+      "valid_from": "2026-01-20T10:00:00Z",
+      "valid_until": null,
+      "supersedes": null,
+      "source": { "tool": "project-maintainer", "session_id": "style-dec", "kind": "explicit-statement" },
+      "visibility": "shared",
+      "signature": null
+    },
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC04-B00000000000002",
+      "subject": "repo",
+      "predicate": "project.linting.formatter",
+      "value": "Use dprint with custom rules from dprint.json.",
+      "value_type": "string",
+      "confidence": 0.85,
+      "valid_from": "2026-04-10T14:00:00Z",
+      "valid_until": null,
+      "supersedes": "BENCH-SC04-A00000000000001",
+      "source": { "tool": "project-maintainer", "session_id": "perf-improve", "kind": "corrected" },
+      "visibility": "shared",
+      "signature": null
+    },
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC04-C00000000000003",
+      "subject": "repo",
+      "predicate": "project.linting.formatter",
+      "value": "Use Biome with biome.json configuration.",
+      "value_type": "string",
+      "confidence": 0.92,
+      "valid_from": "2026-07-01T11:00:00Z",
+      "valid_until": null,
+      "supersedes": "BENCH-SC04-B00000000000002",
+      "source": { "tool": "project-maintainer", "session_id": "unified-tools", "kind": "corrected" },
+      "visibility": "shared",
+      "signature": null
+    },
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC04-D00000000000004",
+      "subject": "repo",
+      "predicate": "project.dependencies.typescript",
+      "value": "Use strict mode.",
+      "value_type": "string",
+      "confidence": 0.9,
+      "valid_from": "2026-02-01T09:00:00Z",
+      "valid_until": null,
+      "supersedes": null,
+      "source": { "tool": "project-maintainer", "session_id": "ts-setup", "kind": "explicit-statement" },
+      "visibility": "shared",
+      "signature": null
+    },
+    {
+      "schema_version": "0.1.0",
+      "id": "BENCH-SC04-E00000000000005",
+      "subject": "repo",
+      "predicate": "project.dependencies.typescript",
+      "value": "Use strict mode with exactOptionalPropertyTypes.",
+      "value_type": "string",
+      "confidence": 0.88,
+      "valid_from": "2026-05-15T10:00:00Z",
+      "valid_until": null,
+      "supersedes": "BENCH-SC04-D00000000000004",
+      "source": { "tool": "project-maintainer", "session_id": "stricter-ts", "kind": "corrected" },
+      "visibility": "shared",
+      "signature": null
+    }
+  ],
+  "queries": [
+    {
+      "subject": "repo",
+      "predicate": "project.linting.formatter",
+      "expected_value": "Use Biome with biome.json configuration.",
+      "expected_chain_length": 3,
+      "expected_previous_value": "Use dprint with custom rules from dprint.json.",
+      "expected_explanation_includes": "supersedes",
+      "explanation": "Formatter evolved Prettier → dprint → Biome. Current is Biome."
+    },
+    {
+      "subject": "repo",
+      "predicate": "project.dependencies.typescript",
+      "expected_value": "Use strict mode with exactOptionalPropertyTypes.",
+      "expected_chain_length": 2,
+      "expected_previous_value": "Use strict mode.",
+      "expected_explanation_includes": "supersedes",
+      "explanation": "TypeScript config evolved from strict to strict+exactOptionalPropertyTypes."
+    }
+  ]
+}

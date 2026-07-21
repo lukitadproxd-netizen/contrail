@@ -1,7 +1,7 @@
 {
   "name": "@lukitadproxd-netizen/engram",
   "version": "0.0.0",
-  "description": "Contrail ↔ Engram bidirectional adapter (stretch)",
+  "description": "[EXPERIMENTAL] Contrail → Engram one-way adapter (convertFromEngram not implemented)",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

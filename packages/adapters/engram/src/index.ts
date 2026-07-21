@@ -1,3 +1,15 @@
+/**
+ * EXPERIMENTAL — ONE-WAY ADAPTER
+ *
+ * This adapter converts Contrail claims to Engram-compatible envelopes.
+ * The reverse direction (convertFromEngram) is NOT IMPLEMENTED because
+ * it requires confirming field names against the official Engram schema.
+ *
+ * This adapter proves the interop concept exists. Do not rely on it for
+ * production data exchange until the reverse path is also implemented
+ * and round-trip tested.
+ */
+
 import type { Claim, Trajectory } from '@lukitadproxd-netizen/core';
 
 export interface EngramEnvelope {

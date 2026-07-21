@@ -45,10 +45,11 @@ describe('ContrailMCPServer', () => {
     });
 
     expect(recallResult.isError).toBeFalsy();
-    const claim = JSON.parse(recallResult.content[0].text);
-    expect(claim.predicate).toBe('preference.editor');
-    expect(claim.value).toBe('vscode');
-    expect(claim.confidence).toBe(0.9);
+    const belief = JSON.parse(recallResult.content[0].text);
+    expect(belief.predicate).toBe('preference.editor');
+    expect(belief.current_belief.value).toBe('vscode');
+    expect(belief.current_belief.recorded_confidence).toBe(0.9);
+    expect(belief.superseded_claim).toBeNull();
   });
 
   it('contrail_trajectory shows full chain with isHead', async () => {
@@ -72,7 +73,7 @@ describe('ContrailMCPServer', () => {
       predicate: 'preference.editor'
     });
     const firstClaim = JSON.parse(firstRecall.content[0].text);
-    const firstId = firstClaim.id;
+    const firstId = firstClaim.current_belief.id;
 
     // Second claim superseding first
     await rememberTool.handler({
@@ -104,6 +105,16 @@ describe('ContrailMCPServer', () => {
     expect(trajectory.history[0].value).toBe('neovim');
     expect(trajectory.history[1].isHead).toBe(false);
     expect(trajectory.history[1].value).toBe('vscode');
+
+    const recallResult = await recallTool.handler({
+      subject: 'self',
+      predicate: 'preference.editor'
+    });
+    const belief = JSON.parse(recallResult.content[0].text);
+    expect(belief.current_belief.value).toBe('neovim');
+    expect(belief.superseded_claim.value).toBe('vscode');
+    expect(belief.why_this_is_current).toContain(firstId);
+    expect(belief.reasoning_chain.map((claim: { status: string }) => claim.status)).toEqual(['superseded', 'current']);
   });
 
   it('contrail_recall on unknown predicate returns not found message', async () => {

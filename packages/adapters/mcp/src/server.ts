@@ -3,7 +3,7 @@ import { readFileSync, appendFileSync, existsSync, mkdirSync, writeFileSync } fr
 import { resolve } from 'path';
 import { lock, unlock } from 'proper-lockfile';
 import { z } from 'zod';
-import { parseClaim, resolveTrajectory, getCurrentClaim } from '../../../core/dist/index.js';
+import { parseClaim, resolveCurrentBelief, resolveTrajectory } from '../../../core/dist/index.js';
 import type { Claim } from '../../../core/dist/index.js';
 
 const STORE_DIR = '.contrail';
@@ -49,6 +49,16 @@ function readClaims(storePath: string): Claim[] {
 function getLockPath(storePath: string): string {
   const dir = resolve(storePath, '..');
   return resolve(dir, LOCK_FILE);
+}
+
+function toClaimEvidence(claim: Claim) {
+  return {
+    id: claim.id,
+    value: claim.value,
+    current_since: claim.valid_from ?? null,
+    recorded_confidence: claim.confidence,
+    source: claim.source
+  };
 }
 
 async function ensureLockDir(lockPath: string): Promise<void> {
@@ -200,9 +210,9 @@ export class ContrailMCPServer {
     const recallHandler = async (args: Record<string, unknown>) => {
       const a = args as RecallArgs;
       const claims = readClaims(this.storePath);
-      const current = getCurrentClaim(claims, a.subject, a.predicate);
+      const belief = resolveCurrentBelief(claims, a.subject, a.predicate);
       
-      if (!current) {
+      if (!belief) {
         return {
           content: [{
             type: 'text' as const,
@@ -211,10 +221,25 @@ export class ContrailMCPServer {
         };
       }
 
+      const { current, previous, history } = belief;
+      const reasoningChain = history.slice().reverse().map(claim => ({
+        ...toClaimEvidence(claim),
+        status: claim.id === current.id ? 'current' : 'superseded'
+      }));
+
       return {
         content: [{
           type: 'text' as const,
-          text: JSON.stringify(current, null, 2)
+          text: JSON.stringify({
+            subject: a.subject,
+            predicate: a.predicate,
+            current_belief: toClaimEvidence(current),
+            why_this_is_current: previous
+              ? `This claim supersedes ${previous.id}, so it is the current instruction.`
+              : 'This is the only recorded instruction for this subject and predicate.',
+            superseded_claim: previous ? toClaimEvidence(previous) : null,
+            reasoning_chain: reasoningChain
+          }, null, 2)
         }]
       };
     };
@@ -274,7 +299,7 @@ export class ContrailMCPServer {
 
     this.server.tool(
       'contrail_recall',
-      'Retrieve current belief for a subject/predicate',
+      'Retrieve the current project instruction and the supersession evidence behind it',
       {
         subject: z.string().describe('Who/what to recall about (default: "self")'),
         predicate: z.string().describe('Namespaced key to recall')

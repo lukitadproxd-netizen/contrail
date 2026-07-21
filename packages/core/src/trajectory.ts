@@ -1,4 +1,4 @@
-import type { Claim, Trajectory, TrajectoryResolutionError } from './types.js';
+import type { BeliefResolution, Claim, Trajectory, TrajectoryResolutionError } from './types.js';
 
 /**
  * Resolves the trajectory for a given (subject, predicate) pair.
@@ -87,9 +87,25 @@ export function getCurrentClaim(
   subject: string,
   predicate: string
 ): Claim | null {
+  return resolveCurrentBelief(claims, subject, predicate)?.current ?? null;
+}
+
+/**
+ * Resolves the current claim and the supersession evidence behind it.
+ * Returns null when no claim exists for the requested subject/predicate pair.
+ */
+export function resolveCurrentBelief(
+  claims: Claim[],
+  subject: string,
+  predicate: string
+): BeliefResolution | null {
   try {
     const trajectory = resolveTrajectory(claims, subject, predicate);
-    return trajectory.head;
+    return {
+      current: trajectory.head,
+      previous: trajectory.claims[1] ?? null,
+      history: trajectory.claims
+    };
   } catch (e) {
     const err = e as TrajectoryResolutionError;
     if (err.code === 'NO_HEAD') return null;

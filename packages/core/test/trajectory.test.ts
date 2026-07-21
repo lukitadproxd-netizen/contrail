@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveTrajectory, getCurrentClaim, getSupersessionChain, isHead, getAllTrajectories } from '../src/trajectory.js';
+import { resolveTrajectory, getCurrentClaim, getSupersessionChain, isHead, getAllTrajectories, resolveCurrentBelief } from '../src/trajectory.js';
 import type { Claim, TrajectoryResolutionError } from '../src/types.js';
 
 function createClaim(overrides: Partial<Claim> = {}): Claim {
@@ -85,6 +85,19 @@ describe('getCurrentClaim', () => {
     const claims = [createClaim({ id: '01JAAAAAAAAAAAAAAAAAAAAAAA', predicate: 'preference.editor' })];
     const current = getCurrentClaim(claims, 'self', 'preference.theme');
     expect(current).toBeNull();
+  });
+});
+
+describe('resolveCurrentBelief', () => {
+  it('returns the current claim, the claim it replaced, and the full history', () => {
+    const base = createClaim({ id: '01JAAAAAAAAAAAAAAAAAAAAAAA' });
+    const head = createClaim({ id: '01JBBBBBBBBBBBBBBBBBBBBBBB', supersedes: '01JAAAAAAAAAAAAAAAAAAAAAAA' });
+
+    const belief = resolveCurrentBelief([base, head], 'self', 'preference.editor');
+
+    expect(belief?.current.id).toBe(head.id);
+    expect(belief?.previous?.id).toBe(base.id);
+    expect(belief?.history.map(claim => claim.id)).toEqual([head.id, base.id]);
   });
 });
 

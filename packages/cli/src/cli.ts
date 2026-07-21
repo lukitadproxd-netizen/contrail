@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { createStore, generateULID, type Store } from './index.js';
-import { parseClaim, resolveTrajectory } from '@lukitadproxd-netizen/core';
+import { parseClaim, resolveCurrentBelief, resolveTrajectory } from '@lukitadproxd-netizen/core';
 import type { Claim } from '@lukitadproxd-netizen/core';
 
 const program = new Command();
@@ -12,6 +12,47 @@ program
 
 function getStore(cwd: string): Store {
   return createStore(cwd);
+}
+
+function formatSource(claim: Claim): string {
+  if (!claim.source) return 'not recorded';
+  return `${claim.source.tool} (${claim.source.kind})`;
+}
+
+function formatTimestamp(claim: Claim): string {
+  return claim.valid_from ?? 'not recorded';
+}
+
+function printBeliefExplanation(claims: Claim[], subject: string, predicate: string): void {
+  const belief = resolveCurrentBelief(claims, subject, predicate);
+  if (!belief) {
+    console.log(`No claims for ${subject}/${predicate}`);
+    return;
+  }
+
+  const { current, previous, history } = belief;
+  console.log(`${subject}/${predicate}`);
+  console.log('\nCURRENT INSTRUCTION');
+  console.log(`  ${JSON.stringify(current.value)}`);
+  console.log(`  Current since: ${formatTimestamp(current)}`);
+  console.log(`  Source: ${formatSource(current)}`);
+  console.log(`  Recorded confidence: ${current.confidence.toFixed(2)}`);
+  console.log(`  Claim: ${current.id}`);
+
+  console.log('\nWHY THIS IS CURRENT');
+  if (previous) {
+    console.log(`  This claim supersedes ${previous.id}, so it is the current instruction.`);
+    console.log(`  Previous instruction: ${JSON.stringify(previous.value)}`);
+  } else {
+    console.log('  This is the only recorded instruction for this subject and predicate.');
+  }
+
+  console.log('\nREASONING CHAIN (oldest → current)');
+  for (const [index, claim] of history.slice().reverse().entries()) {
+    const status = claim.id === current.id ? 'current' : 'superseded';
+    console.log(`  ${index + 1}. [${status}] ${JSON.stringify(claim.value)}`);
+    console.log(`     ${formatTimestamp(claim)} | ${formatSource(claim)} | confidence ${claim.confidence.toFixed(2)} | ${claim.id}`);
+  }
 }
 
 program
@@ -111,17 +152,7 @@ program
       return;
     }
 
-    const trajectory = resolveTrajectory(claims, options.subject, predicate);
-    if (trajectory.length === 0) {
-      console.log(`No claims for ${options.subject}/${predicate}`);
-      return;
-    }
-
-    console.log(`${options.subject}/${predicate}:`);
-    for (const c of trajectory.claims) {
-      const marker = c.id === trajectory.head.id ? '→' : ' ';
-      console.log(`  ${marker} ${c.id} | ${c.confidence.toFixed(2)} | ${JSON.stringify(c.value)}`);
-    }
+    printBeliefExplanation(claims, options.subject, predicate);
   });
 
 program

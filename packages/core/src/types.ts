@@ -49,6 +49,16 @@ export interface Trajectory {
   length: number;
 }
 
+/**
+ * The resolved current claim together with the evidence that made it current.
+ * `history` is ordered newest-first, matching Trajectory.
+ */
+export interface BeliefResolution {
+  current: Claim;
+  previous: Claim | null;
+  history: Claim[];
+}
+
 export interface TrajectoryResolutionError {
   code: 'NO_HEAD' | 'MULTIPLE_HEADS' | 'CYCLE_DETECTED' | 'BROKEN_CHAIN';
   message: string;

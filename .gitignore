@@ -42,3 +42,6 @@ coverage/
 yarn.lock
 pnpm-lock.yaml
 testdir/
+
+# Tarballs
+*.tgz

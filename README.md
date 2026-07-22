@@ -1,29 +1,41 @@
 # Contrail
 
-**Versioned project memory for coding agents.**
+**Deterministic temporal memory for AI coding agents.**
 
-Contrail prevents a coding agent from treating changing project instructions as
-timeless facts. It preserves the current instruction, the instruction it
-replaced, and the evidence for that change.
+[![npm version](https://img.shields.io/npm/v/@contrail-spec/core?color=blue)](https://www.npmjs.com/package/@contrail-spec/core)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-42%20passing-brightgreen)](#)
 
-## The problem
+AI coding assistants don't remember between sessions. Contrail gives them
+deterministic, auditable memory with **conflict detection** — so when
+instructions contradict each other, you know about it instead of getting
+a wrong answer silently.
 
-Project conventions change. A team can move from Node's built-in test runner to
-Vitest, change its package manager, or reverse an architecture decision. Normal
-agent memory either keeps stale context or overwrites it without an explanation.
+```bash
+npx @contrail-spec/cli init
+npx @contrail-spec/cli add project.testing.framework "Use Vitest." --confidence 0.98
+npx @contrail-spec/cli log project.testing.framework
+```
 
-When an agent is asked what to do, the important questions are:
+## Why Contrail?
 
-- What is the current instruction?
-- Who recorded it, and when?
-- What did it replace?
+Existing memory solutions (Mem0, Zep, Claude Code native memory)
+store the **latest value** and forget the past. That works until
+two instructions contradict each other — then the agent picks one
+arbitrarily and you get an incorrect answer.
 
-## The solution
+Contrail stores **trajectories**: every claim can explicitly replace
+(`supersede`) a previous claim, forming an auditable chain. When
+two claims conflict without a clear superseder, Contrail **reports
+the conflict** instead of guessing.
 
-Contrail stores repository-local project instructions as append-only claims.
-When an instruction changes, the new claim supersedes the old one. A coding
-agent retrieves the current claim with its source, timestamp, recorded
-confidence, and complete correction chain.
+| | Flat memory | Contrail |
+|---|---|---|
+| Remembers history | ❌ | ✅ Full supersession chain |
+| Detects conflicts | ❌ | ✅ MULTIPLE_HEADS |
+| Deterministic | ✅ | ✅ |
+| Offline / no API cost | ✅ | ✅ |
+| MCP native | ❌ | ✅ |
 
 ## See the value in two minutes
 
@@ -86,6 +98,16 @@ timestamp) in every query. Confidence-only provides none.
 
 ## Quick install
 
+**Try it without cloning:**
+```bash
+npx @contrail-spec/cli init
+npx @contrail-spec/cli add preference.editor "neovim" --confidence 0.95 \
+  --source-tool my-brain --source-kind explicit-statement
+npx @contrail-spec/cli log preference.editor
+```
+
+**Or clone the repo for the demo and benchmarks:**
+
 Requires Node.js 20 or later.
 
 ```bash
@@ -97,32 +119,35 @@ npm run demo
 
 ## Use it with Claude Code
 
-Build the local MCP server, add it for this repository, then ask the agent for
-the current project policy.
+Connect in one line (no build needed):
 
 ```bash
-npm run build:mcp
-claude mcp add --scope local contrail -- node "$(pwd)/packages/adapters/mcp/dist/cli.js"
+claude mcp add contrail -- npx @contrail-spec/mcp
 claude
 ```
 
-In Claude Code:
+Then ask: *"What testing framework should I use?"*
 
-> What testing framework should I use? Explain the current project policy.
+For a full seeded walkthrough with local development, see
+[Claude Code MCP setup](docs/quick-start.md#connect-claude-code).
 
-See [Claude Code MCP setup](docs/quick-start.md#connect-claude-code) for
-PowerShell and Windows instructions, plus a complete seeded walkthrough.
+## What Contrail does
 
-## What Contrail does in this release
+| Capability | Status |
+|---|---|
+| Claim storage (JSONL) | ✅ |
+| Supersession chain (temporal resolution) | ✅ |
+| Conflict detection (MULTIPLE_HEADS) | ✅ |
+| MCP server (Claude Code integration) | ✅ |
+| CLI (init, add, log, diff) | ✅ |
+| Deterministic benchmark suite | ✅ |
+| Semantic search / embeddings | ❌ deliberate |
+| Cloud / SaaS | ❌ deliberate |
+| Dashboard / web UI | ❌ deliberate |
 
-- Stores a project instruction locally.
-- Replaces it without deleting the previous instruction.
-- Resolves the current instruction.
-- Explains its source, timestamp, recorded confidence, and supersession chain.
-
-Contrail does **not** yet do semantic search, conflict resolution, confidence
-calibration, synchronization, dashboards, or enterprise access control. Those
-are deliberately out of scope until this core workflow proves useful.
+Contrail is intentionally **offline-first, dependency-minimal, and
+deterministic**. It doesn't call any LLM, doesn't need API keys,
+and doesn't generate ongoing costs.
 
 ## How it fits
 
@@ -133,8 +158,18 @@ Coding agent ──MCP──> Contrail ──> .contrail/claims.jsonl
                     contrail CLI
 ```
 
-The store is append-only JSONL in the repository. The architecture stays small:
-the CLI and MCP server both use the same claim and trajectory logic.
+The store is append-only JSONL in the repository — compatible with
+Claude Code's native memory format. The CLI and MCP server share
+the same core trajectory logic.
+
+## Packages
+
+| Package | npm | Description |
+|---------|-----|-------------|
+| `@contrail-spec/core` | [![npm](https://img.shields.io/npm/v/@contrail-spec/core?color=blue)](https://www.npmjs.com/package/@contrail-spec/core) | Claim validation, trajectory resolution, conflict detection |
+| `@contrail-spec/cli` | [![npm](https://img.shields.io/npm/v/@contrail-spec/cli?color=blue)](https://www.npmjs.com/package/@contrail-spec/cli) | CLI tool (init, add, log, diff) |
+| `@contrail-spec/mcp` | [![npm](https://img.shields.io/npm/v/@contrail-spec/mcp?color=blue)](https://www.npmjs.com/package/@contrail-spec/mcp) | MCP server for Claude Code |
+| `@contrail-spec/engram` | [![npm](https://img.shields.io/npm/v/@contrail-spec/engram?color=blue)](https://www.npmjs.com/package/@contrail-spec/engram) | [EXPERIMENTAL] Engram adapter |
 
 ## Documentation
 
@@ -147,3 +182,7 @@ the CLI and MCP server both use the same claim and trajectory logic.
 ## License
 
 [Apache-2.0](LICENSE)
+
+---
+
+*Built with [vibe coding](https://en.wikipedia.org/wiki/Vibe_coding) and a lot of coffee.*
